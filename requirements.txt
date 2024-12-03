@@ -5,3 +5,5 @@ matplotlib
 scikit-learn
 ipywidgets
 numpy
+streamlit-option-menu
+snowflake-connector-python
