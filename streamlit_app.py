@@ -21,16 +21,20 @@ with st.sidebar:
 )
     
 if selected == "Introduction":
-    st.header('Introduction')
+    st.title('Introduction')
    # Corrected URL for the raw CSV file
     url = 'https://raw.githubusercontent.com/LUCE-Blockchain/Databases-for-teaching/main/Framingham%20Dataset.csv'
     #allow all the columns to be visible
     pd.set_option('display.max_columns', None)
     # Read the CSV file from the URL
     df = pd.read_csv(url)
-    
+
+
+
+
 
 if selected == "Data preparation":
+    st.title("Data preparation")
     # Corrected URL for the raw CSV file
     url = 'https://raw.githubusercontent.com/LUCE-Blockchain/Databases-for-teaching/main/Framingham%20Dataset.csv'
     #allow all the columns to be visible
@@ -42,8 +46,56 @@ if selected == "Data preparation":
     st.write("### Summary Statistics of relevant rows")
     st.dataframe(df_rq.describe())
 
+    # Create a sample DataFrame or use your own data
+    st.write("###Correlation Heatmap")
+
+    # Check if the dataset contains numeric data
+    if df_rq.select_dtypes(include=[np.number]).empty:
+        st.warning("The dataset does not contain numeric columns for correlation analysis.")
+    else:
+        # Calculate the correlation matrix
+        correlation_matrix = df_rq.corr()
+
+        # Create the heatmap
+        st.write("### Correlation Heatmap")
+        fig, ax = plt.subplots(figsize=(18, 12))
+        sns.heatmap(
+            correlation_matrix,
+            annot=False,
+            cmap="RdBu_r",
+            linewidths=1,
+            center=0,
+            cbar_kws={"shrink": 0.8, "label": "Correlation Coefficient"},
+            ax=ax,
+        )
+
+        # Annotate significant correlations
+        for row in range(correlation_matrix.shape[0]):
+            for col in range(correlation_matrix.shape[1]):
+                correlation_value = correlation_matrix.iloc[row, col]
+                if abs(correlation_value) >= 0.5 and row != col:
+                    ax.text(
+                        col + 0.5,
+                        row + 0.5,
+                        f"{correlation_value:.2f}",
+                        ha="center",
+                        va="center",
+                        color="black",
+                        fontsize=12,
+                        weight="bold",
+                    )
+
+        ax.set_title("Correlation Heatmap", fontsize=20, weight="bold")
+        ax.set_xticklabels(ax.get_xticklabels(), fontsize=12, rotation=45, ha="right")
+        ax.set_yticklabels(ax.get_yticklabels(), fontsize=12, rotation=0)
+        st.pyplot(fig)
+    
+
+
 
 if selected == "Data exploration and cleaning":
+    st.title("Data exploration and cleaning")
+    st.header("###Missing Data")
     # Corrected URL for the raw CSV file
     url = 'https://raw.githubusercontent.com/LUCE-Blockchain/Databases-for-teaching/main/Framingham%20Dataset.csv'
     #allow all the columns to be visible
@@ -74,9 +126,14 @@ if selected == "Data exploration and cleaning":
      )
     else:
         st.success("The dataset has no missing values.")
+    
+    
+
+
 
 
 if selected == "Describe and Visualize the data":
+    st.title("Describe and Visualize the data")
     # Corrected URL for the raw CSV file
     url = 'https://raw.githubusercontent.com/LUCE-Blockchain/Databases-for-teaching/main/Framingham%20Dataset.csv'
     #allow all the columns to be visible
@@ -87,7 +144,11 @@ if selected == "Describe and Visualize the data":
     df_rq=df[['BMI', 'AGE', 'SEX', 'TOTCHOL', 'SYSBP', 'DIABP', 'CURSMOKE','DIABETES', 'BPMEDS', 'HEARTRTE', 'GLUCOSE','ANYCHD','PERIOD']]
     st.write("Summary Statistics of relevant rows")
     st.dataframe(df_rq.describe())
-   
+
+
+
+
+
 if selected == "Data Analysis":
     # Corrected URL for the raw CSV file
     url = 'https://raw.githubusercontent.com/LUCE-Blockchain/Databases-for-teaching/main/Framingham%20Dataset.csv'
@@ -99,6 +160,10 @@ if selected == "Data Analysis":
     df_rq=df[['BMI', 'AGE', 'SEX', 'TOTCHOL', 'SYSBP', 'DIABP', 'CURSMOKE','DIABETES', 'BPMEDS', 'HEARTRTE', 'GLUCOSE','ANYCHD','PERIOD']]
     st.write("### Summary Statistics of relevant rows")
     st.dataframe(df_rq.describe())
+
+
+
+
 
 if selected == "Conclusion":
     # Corrected URL for the raw CSV file
