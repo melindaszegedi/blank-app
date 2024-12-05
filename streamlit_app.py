@@ -94,147 +94,198 @@ if selected == "Data preparation":
 
 if selected == "Data exploration and cleaning":
     st.title("Data exploration and cleaning")
-    st.header("Missing Data")
-    # Corrected URL for the raw CSV file
-    url = 'https://raw.githubusercontent.com/LUCE-Blockchain/Databases-for-teaching/main/Framingham%20Dataset.csv'
-    #allow all the columns to be visible
-    pd.set_option('display.max_columns', None)
-    # Read the CSV file from the URL
-    df = pd.read_csv(url)
-    #selection of relevant rows and columns for research question, put into new dataset
-    df_rq=df[['BMI', 'AGE', 'SEX', 'TOTCHOL', 'SYSBP', 'DIABP', 'CURSMOKE','DIABETES', 'BPMEDS', 'HEARTRTE', 'GLUCOSE','ANYCHD','PERIOD']]
+    with st.expander("##### Missing Data"):
+        st.header("Missing Data")
+        # Corrected URL for the raw CSV file
+        url = 'https://raw.githubusercontent.com/LUCE-Blockchain/Databases-for-teaching/main/Framingham%20Dataset.csv'
+        #allow all the columns to be visible
+        pd.set_option('display.max_columns', None)
+        # Read the CSV file from the URL
+        df = pd.read_csv(url)
+        #selection of relevant rows and columns for research question, put into new dataset
+        df_rq=df[['BMI', 'AGE', 'SEX', 'TOTCHOL', 'SYSBP', 'DIABP', 'CURSMOKE','DIABETES', 'BPMEDS', 'HEARTRTE', 'GLUCOSE','ANYCHD','PERIOD']]
     
-    missing_values_data = {
+        missing_values_data = {
     "Column": ["Age", "Systolic Blood Pressure", "Diastolic Blood Pressure", "Cholesterol", "Smoking", "BMI" ],
     "Missing type": ["MCAR", "MAR or MCAR", "MAR or MCAR", "MAR or MNAR", "MNAR", "MAR"],
     "Reasoning": ["Generally easy to report, likely missing due to random error.", "Could be MAR if older or sicker participants avoid measurements, or MCAR if random errors occurred.", "Similar reasoning to sysBP.", "Could be MNAR if higher cholesterol individuals avoid reporting, or MAR if related to age/BMI.", "People may underreport smoking status due to social stigma.", "Missingness likely depends on variables like age or cholesterol, but not on BMI itself."],
     }
-    # Create a DataFrame
-    mdr = pd.DataFrame(missing_values_data)
-    # Display the table
-    st.write("### Interactive Table")
-    st.dataframe(mdr)
+        # Create a DataFrame
+        mdr = pd.DataFrame(missing_values_data)
+        # Display the table
+        st.write("### Interactive Table")
+        st.dataframe(mdr)
 
-    #Identify missing values in dataset
-    missing_values = df_rq.isnull().sum().sum()
-    # Display warning message if there are missing values
-    if missing_values > 0:
-        st.markdown(
-         f"<span style='color:red; font-weight:bold;'>Warning: The dataset has {missing_values} missing values.</span>", 
-        unsafe_allow_html=True
-     )
-    else:
-        st.success("The dataset has no missing values.")
+        #Identify missing values in dataset
+        missing_values = df_rq.isnull().sum().sum()
+        # Display warning message if there are missing values
+        if missing_values > 0:
+            st.markdown(
+            f"<span style='color:red; font-weight:bold;'>Warning: The dataset has {missing_values} missing values.</span>", 
+            unsafe_allow_html=True
+        )
+        else:
+            st.success("The dataset has no missing values.")
     
-    #missing data over period
-    st.header("Further Missing Data Analysis")
-    # Check for missing data
-    missing_data = df_rq.isnull().sum()
-    "Missing Data Count for each column:"
-    st.write(missing_data[missing_data > 0])
+        #missing data over period
+        st.header("Further Missing Data Analysis")
+        # Check for missing data
+        missing_data = df_rq.isnull().sum()
+        "Missing Data Count for each column:"
+        st.write(missing_data[missing_data > 0])
 
-    # Investigate missing values by period
-    if 'PERIOD' in df_rq.columns:
-        period_missing = df_rq.groupby('PERIOD').apply(lambda x: x.isnull().sum())
+        # Investigate missing values by period
+        if 'PERIOD' in df_rq.columns:
+            period_missing = df_rq.groupby('PERIOD').apply(lambda x: x.isnull().sum())
 
-        # Plot heatmap
-        st.write("Missing Data Across Examination Periods")
-        fig, ax = plt.subplots(figsize=(10, 6))
-        sns.heatmap(period_missing, cmap="coolwarm", annot=True, fmt=".0f",
-                    linewidths=0.5, annot_kws={"size": 8},
-                    cbar_kws={'label': 'Count of Missing Values'})
-        plt.title('Missing Data Across Examination Periods', fontsize=16)
-        plt.xlabel('Variables', fontsize=12)
-        plt.ylabel('Examination Period', fontsize=12)
-        plt.xticks(rotation=45, ha='right', fontsize=10)
-        st.pyplot(fig)
-    else:
-        st.write("The dataset does not contain a 'PERIOD' column.")
+            # Plot heatmap
+            st.write("Missing Data Across Examination Periods")
+            fig, ax = plt.subplots(figsize=(10, 6))
+            sns.heatmap(period_missing, cmap="coolwarm", annot=True, fmt=".0f",
+                        linewidths=0.5, annot_kws={"size": 8},
+                        cbar_kws={'label': 'Count of Missing Values'})
+            plt.title('Missing Data Across Examination Periods', fontsize=16)
+            plt.xlabel('Variables', fontsize=12)
+            plt.ylabel('Examination Period', fontsize=12)
+            plt.xticks(rotation=45, ha='right', fontsize=10)
+            st.pyplot(fig)
+        else:
+            st.write("The dataset does not contain a 'PERIOD' column.")
  
-    st.write("## Imputation of missing values for different columns:")
-    st.markdown("""
+        st.write("## Imputation of missing values for different columns:")
+        st.markdown("""
 - **TOTCHOL**: The missing values of TOTCHOL are reasonable and can therefore be calculated with median imputation.   
 - **BMI**: The missing values of BMI are reasonable and can therefore be calculated with median imputation.
 - **HEARTRTE**: The missing values of HEARTRTE are reasonable and can therefore be calculated with median imputation.
 - **BPMEDS**: The missing values of BPMEDS should be solved with categorical imputation. A new category, 'Unknown,' is created.
 - **GLUCOSE**: There is a high amount of missing values in GLUCOSE. Therefore, K-Nearest Neighbors (KNN) is used for imputation.
 """)
-    # Before imputation: Distribution of GLUCOSE
-    col1, col2 = st.columns(2)
-    with col1:
-        st.write("Distribution of GLUCOSE Before Imputation:")
-        fig1, ax1 = plt.subplots(figsize=(6, 4))
-        sns.histplot(df_rq['GLUCOSE'], bins=30, kde=True, ax=ax1)
-        ax1.set_title('GLUCOSE Distribution Before Imputation')
-        ax1.set_xlabel('GLUCOSE')
-        ax1.set_ylabel('Frequency')
-        st.pyplot(fig1)
+      # Imputation
+        median_imputer = SimpleImputer(strategy='median')
+        # Impute TOTCHOL
+        df_rq['TOTCHOL'] = median_imputer.fit_transform(df_rq[['TOTCHOL']])
+        # Impute BMI
+        df_rq['BMI'] = median_imputer.fit_transform(df_rq[['BMI']])
+        # Impute BPMEDS
+        df_rq['BPMEDS'] = df_rq['BPMEDS'].fillna(-1)  # -1 as "Unknown"
+        # Impute HEARTRTE
+        df_rq['HEARTRTE'] = median_imputer.fit_transform(df_rq[['HEARTRTE']])
+        st.write("Data After Imputation:")
+        st.dataframe(df_rq.head())
 
-    # KNN imputation for GLUCOSE (Only for GLUCOSE column)
-    # Create a copy of the DataFrame to avoid modifying the original data
-    df_rq_knn = df_rq.copy()
-    # Initialize KNN imputer
-    imputer = KNNImputer(n_neighbors=5)
-    df_rq_knn['GLUCOSE'] = imputer.fit_transform(df_rq_knn[['GLUCOSE']])
+      # Before imputation: Distribution of GLUCOSE
+        col1, col2 = st.columns(2)
+        with col1:
+            st.write("Distribution of GLUCOSE Before Imputation:")
+            fig1, ax1 = plt.subplots(figsize=(6, 4))
+            sns.histplot(df_rq['GLUCOSE'], bins=30, kde=True, ax=ax1)
+            ax1.set_title('GLUCOSE Distribution Before Imputation')
+            ax1.set_xlabel('GLUCOSE')
+            ax1.set_ylabel('Frequency')
+            st.pyplot(fig1)
 
-    with col2:
-        # After imputation: Distribution of GLUCOSE
-        st.write("Distribution of GLUCOSE After Imputation:")
-        fig2, ax2 = plt.subplots(figsize=(6, 4))
-        sns.histplot(df_rq_knn['GLUCOSE'], bins=30, kde=True, ax=ax2)
-        ax2.set_title('GLUCOSE Distribution After Imputation')
-        ax2.set_xlabel('GLUCOSE')
-        ax2.set_ylabel('Frequency')
-        st.pyplot(fig2)
+        # KNN imputation for GLUCOSE (Only for GLUCOSE column)
+        # Create a copy of the DataFrame to avoid modifying the original data
+        df_rq = df_rq.copy()
+        # Initialize KNN imputer
+        imputer = KNNImputer(n_neighbors=5)
+        df_rq['GLUCOSE'] = imputer.fit_transform(df_rq[['GLUCOSE']])
+        with col2:
+            st.write("Distribution of GLUCOSE Before Imputation:")
+            fig1, ax1 = plt.subplots(figsize=(6, 4))
+            sns.histplot(df_rq['GLUCOSE'], bins=30, kde=True, ax=ax1)
+            ax1.set_title('GLUCOSE Distribution Before Imputation')
+            ax1.set_xlabel('GLUCOSE')
+            ax1.set_ylabel('Frequency')
+            st.pyplot(fig1)
 
-    st.header("Identify, report, correct issues with erroneous data (if any)")
-    # List of binary columns
-    binary_columns = df_rq[['SEX', 'CURSMOKE', 'DIABETES', 'BPMEDS', 'ANYCHD', 'PERIOD']]
+    with st.expander("##### Identify, report, correct issues with erroneous data (if any)"):
+        st.header("Identify, report, correct issues with erroneous data (if any)")
+        # List of binary columns
+        binary_columns = df_rq[['SEX', 'CURSMOKE', 'DIABETES', 'BPMEDS', 'ANYCHD', 'PERIOD']]
 
-    # Streamlit UI for displaying value counts of binary columns
-    st.write("### Value Counts for Binary Data Columns:")
+        # Streamlit UI for displaying value counts of binary columns
+        st.write("### Value Counts for Binary Data Columns:")
+        # display the columns in groups of three
+        binary_column_names = binary_columns.columns
+        for i in range(0, len(binary_column_names), 3):
+            # Create columns for three tables side by side
+            cols = st.columns(3)
+    
+            # Display the value counts in each column
+            for col, binary_col in zip(cols, binary_column_names[i:i+3]):
+                value_count = df_rq[binary_col].value_counts()
+                with col:
+                    st.write(f"#### {binary_col}:")
+                    st.write(value_count)
+        
 
-    # Iterate over the binary columns to check value counts and display them
-    for col in binary_columns.columns:
-        value_count = df_rq[col].value_counts()
-        st.write(f"#### {col}:")
-        st.write(value_count)
-        st.write("")  # Add a newline for better readability
+    with st.expander("##### Identify and correct outliers"):
+        st.header("Identify and correct outliers")
+        # Boxplots to visualize outliers
+        st.write("Interactive Variable Visualization")
+        # Define color map for variables
+        color_map = {
+            'BMI': 'lightblue',
+            'AGE': 'lightgreen',
+            'TOTCHOL': 'salmon',
+            'SYSBP': 'gold',
+            'DIABP': 'orchid',
+            'HEARTRTE': 'lightcoral',
+            'GLUCOSE': 'lightpink'
+        }
+        # Select only numerical columns for visualization
+        numerical_columns = ['BMI', 'AGE', 'TOTCHOL', 'SYSBP', 'DIABP', 'HEARTRTE', 'GLUCOSE']
+        df_rq_numeric = df_rq[numerical_columns]
+        # Dropdown menu for selecting a variable
+        selected_variable = st.selectbox("Select a variable to visualize:", numerical_columns)
 
+        if selected_variable:
+            # Plot the selected variable
+            color = color_map.get(selected_variable, 'lightgray')
+            fig, ax = plt.subplots(figsize=(10, 8))
+            sns.boxplot(data=df_rq_numeric, y=selected_variable, color=color, ax=ax)
+            ax.set_title(f'{selected_variable} Boxplot', fontsize=16)
+            ax.set_xlabel('Index')
+            ax.set_ylabel(selected_variable)
+            ax.grid(True)
+            # Display the plot in Streamlit
+            st.pyplot(fig)
 
-    st.header("Identify and correct outliers")
-    # Boxplots to visualize outliers
-    st.write("Interactive Variable Visualization")
-    # Define color map for variables
-    color_map = {
-        'BMI': 'lightblue',
-        'AGE': 'lightgreen',
-        'TOTCHOL': 'salmon',
-        'SYSBP': 'gold',
-        'DIABP': 'orchid',
-        'HEARTRTE': 'lightcoral',
-        'GLUCOSE': 'lightpink'
-    }
-    # Select only numerical columns for visualization
-    numerical_columns = ['BMI', 'AGE', 'TOTCHOL', 'SYSBP', 'DIABP', 'HEARTRTE', 'GLUCOSE']
-    df_rq_numeric = df_rq[numerical_columns]
-    # Dropdown menu for selecting a variable
-    selected_variable = st.selectbox("Select a variable to visualize:", numerical_columns)
+        #impute outliers
+        # Function to detect outliers using IQR
+        def detect_outliers(df_rq, selected_columns):
+            outliers = {}
+            for col in selected_columns:
+                Q1 = df_rq[col].quantile(0.2)
+                Q3 = df_rq[col].quantile(0.8)
+                IQR = Q3 - Q1
 
-    if selected_variable:
-        # Plot the selected variable
-        color = color_map.get(selected_variable, 'lightgray')
-        fig, ax = plt.subplots(figsize=(10, 8))
-        sns.boxplot(data=df_rq_numeric, y=selected_variable, color=color, ax=ax)
-        ax.set_title(f'{selected_variable} Boxplot', fontsize=16)
-        ax.set_xlabel('Index')
-        ax.set_ylabel(selected_variable)
-        ax.grid(True)
-        # Display the plot in Streamlit
-        st.pyplot(fig)
+                # Define the outlier bounds
+                lower_bound = Q1 - 1.5 * IQR
+                upper_bound = Q3 + 1.5 * IQR
 
+                # Detect outliers
+                outliers[col] = df_rq[(df_rq[col] < lower_bound) | (df_rq[col] > upper_bound)]
+            return outliers
 
+        st.title("Outliers per column")
+        # Step 2: Select columns for outlier detection
+        selected_columns = ['BMI', 'AGE', 'TOTCHOL', 'SYSBP', 'DIABP', 'HEARTRTE', 'GLUCOSE']
+    
+        if selected_columns:
+            # Step 3: Detect outliers
+            st.write("### Outlier Detection Results")
+            outliers = detect_outliers(df_rq, selected_columns)
+            total_outliers = 0
 
+            # Display outliers for each column
+            for col, outlier_data in outliers.items():
+                num_outliers_col = len(outlier_data)
+                total_outliers += num_outliers_col
+                st.write(f"#### {col}: {num_outliers_col} outliers")
+
+            st.write(f"### Total Number of Outliers: {total_outliers}")
 
 
 
@@ -305,17 +356,7 @@ if selected == "Conclusion":
     df = pd.read_csv(url)
     #selection of relevant rows and columns for research question, put into new dataset
     df_rq=df[['BMI', 'AGE', 'SEX', 'TOTCHOL', 'SYSBP', 'DIABP', 'CURSMOKE','DIABETES', 'BPMEDS', 'HEARTRTE', 'GLUCOSE','ANYCHD','PERIOD']]
-    st.write("### Summary Statistics of relevant rows")
-    st.dataframe(df_rq.describe())
+    
 
 
 
-## Check the initial distribution of GLUCOSE
-#plt.figure(figsize=(12, 5))
-
-#plt.subplot(1, 2, 1)
-#sns.histplot(df_rq['GLUCOSE'], bins=30, kde=True)
-#plt.title('Distribution of GLUCOSE Before Imputation')
-#plt.xlabel('GLUCOSE')
-#plt.ylabel('Frequency')
-#    st.header("Handling the outliers")
