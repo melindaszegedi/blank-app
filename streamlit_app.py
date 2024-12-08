@@ -283,10 +283,54 @@ if selected == "Data exploration and cleaning":
             for col, outlier_data in outliers.items():
                 num_outliers_col = len(outlier_data)
                 total_outliers += num_outliers_col
-                st.write(f"#### {col}: {num_outliers_col} outliers")
+                st.write(f"###### {col}: {num_outliers_col} outliers")
 
-            st.write(f"### Total Number of Outliers: {total_outliers}")
+            st.write(f"###### Total Number of Outliers: {total_outliers}")
 
+        #imputation of outliers:
+        # determing outliers by IRQ:
+        def detect_outliers(df_rq, column):
+            Q1 = df_rq[column].quantile(0.2)
+            Q3 = df_rq[column].quantile(0.8)
+            IQR = Q3 - Q1
+            lower_bound = Q1 - 1.5 * IQR
+            upper_bound = Q3 + 1.5 * IQR
+            return (df_rq[column] < lower_bound) | (df_rq[column] > upper_bound)
+
+        st.title("Outlier Detection and KNN Imputation")
+        st.dataframe(df_rq.head())
+        #Columns with outliers
+        selected_columns = ['BMI', 'AGE', 'TOTCHOL', 'SYSBP', 'DIABP', 'HEARTRTE', 'GLUCOSE']
+        
+        #Replace outliers with NaN
+        df_imputed = df_rq.copy()
+        for col in selected_columns:
+            df_imputed[col] = df_rq[col].where(~detect_outliers(df, col), np.nan)
+
+        st.write("### DataFrame with Outliers Replaced by NaN")            
+        st.dataframe(df_imputed.head())
+
+        # Apply KNN Imputation to replace NaN values
+        imputer = KNNImputer(n_neighbors=3)
+        df_rqi = df_imputed.copy()
+        df_rqi[selected_columns] = imputer.fit_transform(df_rqi[selected_columns])
+
+        st.write("### DataFrame After KNN Imputation")
+        st.dataframe(df_rqi.head())
+
+
+        #data distribution before and after imputation
+        st.title("Histogram of a Column")
+        # Select a column to plot
+        column_to_plot = ['BMI', 'AGE', 'TOTCHOL', 'SYSBP', 'DIABP', 'HEARTRTE', 'GLUCOSE']
+        # Plot histogram
+        fig, ax = plt.subplots()
+        sns.histplot(df_rqi[column_to_plot], bins=30, kde=True, ax=ax, color='blue')
+        ax.set_title(f"Histogram of {column_to_plot}")
+        ax.set_xlabel(column_to_plot)
+        ax.set_ylabel("Frequency")
+        # Display the plot
+        st.pyplot(fig)
 
 
 if selected == "Describe and Visualize the data":
@@ -303,6 +347,7 @@ if selected == "Describe and Visualize the data":
 
     # Streamlit Title
     st.header("BMI Calculator")
+    st.write("*people < 18 years BMI calculation can be wrong")
     # Input fields for weight and height
     weight = st.number_input("Insert your weight in kilograms (kg):", min_value=0.0, format="%.2f")
     height = st.number_input("Insert your height in meters (m):", min_value=0.0, format="%.2f")
@@ -322,8 +367,12 @@ if selected == "Describe and Visualize the data":
                 st.write("Normal weight")
             elif 25 <= bmi < 29.9:
                 st.write("Overweight")
+            elif 30 <= bmi < 34.9:
+                st.write("Moderately Obese, consider losing weight")
+            elif 35 <= bmi <39.9:
+                st.write("Severely Obese, consider losing weight")
             else:
-                st.write("Obesity")
+                st.write("Morbidly Obese, consider losing weight")
     else:
         st.write("Please enter valid values for weight and height.")
 
