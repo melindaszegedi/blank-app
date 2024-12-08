@@ -286,6 +286,43 @@ if selected == "Data exploration and cleaning":
                 st.write(f"#### {col}: {num_outliers_col} outliers")
 
             st.write(f"### Total Number of Outliers: {total_outliers}")
+        
+        #impute outliers:
+        # Function to detect outliers using IQR
+        def detect_outliers(df, column):
+            Q1 = df[column].quantile(0.2)
+            Q3 = df[column].quantile(0.8)
+            IQR = Q3 - Q1
+            lower_bound = Q1 - 1.5 * IQR
+            upper_bound = Q3 + 1.5 * IQR
+            return (df[column] < lower_bound) | (df[column] > upper_bound)
+
+        st.title("Outlier Imputation")
+        # Select columns for outlier detection and imputation
+        columns_to_impute = st.multiselect(
+            "Select columns for outlier detection and imputation:",
+            options=df.columns,
+            default=['BMI', 'AGE', 'TOTCHOL', 'SYSBP', 'DIABP', 'HEARTRTE', 'GLUCOSE']  # Modify as needed
+        )
+
+        if columns_to_impute:
+            # Create a copy of the DataFrame
+            df_rqi = df.copy()
+
+            # Replace outliers with NaN
+            for col in columns_to_impute:
+                if col in df_rqi.columns:
+                    df_rqi[col] = df_rqi[col].where(~detect_outliers(df_rqi, col), np.nan)
+
+            st.write("Dataset with Outliers Replaced by NaN:")
+            st.write(df_rqi)
+
+            # KNN Imputation
+            imputer = KNNImputer(n_neighbors=3).set_output(transform="pandas")
+            df_imputed = imputer.fit_transform(df_rqi)
+
+            st.write("Dataset After KNN Imputation:")
+            st.write(df_imputed)
 
 
 
