@@ -286,8 +286,7 @@ if selected == "Data exploration and cleaning":
                 st.write(f"###### {col}: {num_outliers_col} outliers")
 
             st.write(f"###### Total Number of Outliers: {total_outliers}")
-
-        #imputation of outliers:
+                #imputation of outliers:
         # determing outliers by IRQ:
         def detect_outliers(df_rq, column):
             Q1 = df_rq[column].quantile(0.2)
@@ -332,7 +331,6 @@ if selected == "Data exploration and cleaning":
         ax.set_ylabel("Frequency")
         # Display the plot
         st.pyplot(fig)
-
 
 
 if selected == "Describe and Visualize the data":
