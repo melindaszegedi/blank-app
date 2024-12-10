@@ -337,7 +337,7 @@ if selected == "Data exploration and cleaning":
         column_to_plot = st.selectbox("Select a column to plot:", numerical_columnsi)
         # Create the histogram
         bins = st.slider("Number of bins", min_value=10, max_value=50, value=30)
-        color=color_map.get(column_to_plot, 'blue')
+        color=color_map.get(column_to_plot)
         fig, ax = plt.subplots()
         sns.histplot(df_rqi[column_to_plot], bins=bins, kde=True, ax=ax, color=color)
         ax.set_title(f"Histogram of {column_to_plot}")
@@ -358,11 +358,26 @@ if selected == "Describe and Visualize the data":
     df = pd.read_csv(url)
     #selection of relevant rows and columns for research question, put into new dataset
     df_rq=df[['BMI', 'AGE', 'SEX', 'TOTCHOL', 'SYSBP', 'DIABP', 'CURSMOKE','DIABETES', 'BPMEDS', 'HEARTRTE', 'GLUCOSE','ANYCHD','PERIOD']]
-    
+    def detect_outliers(df_rq, column):
+        Q1 = df_rq[column].quantile(0.2)
+        Q3 = df_rq[column].quantile(0.8)
+        IQR = Q3 - Q1
+        lower_bound = Q1 - 1.5 * IQR
+        upper_bound = Q3 + 1.5 * IQR
+        return (df_rq[column] < lower_bound) | (df_rq[column] > upper_bound)
+    selected_columns = ['BMI', 'AGE', 'TOTCHOL', 'SYSBP', 'DIABP', 'HEARTRTE', 'GLUCOSE']
+    df_imputed = df_rq.copy()
+    for col in selected_columns:
+        df_imputed[col] = df_rq[col].where(~detect_outliers(df, col), np.nan)
+    imputer = KNNImputer(n_neighbors=3)
+    df_rqi = df_imputed.copy()
+    df_rqi[selected_columns] = imputer.fit_transform(df_rqi[selected_columns])
+
+
     #title
     st.title("Describe and visualize the data")
     st.header("Proportion of each category")
-        # Calculate proportions
+    # Calculate proportions
     SEX_proportions = df_rqi['SEX'].value_counts(normalize=True) * 100
     CURSMOKE_proportions = df_rqi['CURSMOKE'].value_counts(normalize=True) * 100
     DIABETES_proportions = df_rqi['DIABETES'].value_counts(normalize=True) * 100
@@ -376,11 +391,11 @@ if selected == "Describe and Visualize the data":
         proportions.plot(kind='bar', color=['lightskyblue', 'coral'], ax=ax)
         for i, v in enumerate(proportions):
             ax.text(i, v + 1, f'{v:.1f}%', ha='center', va='bottom', fontsize=10)
-        ax.set_title(title)
-        ax.set_xlabel(xlabel)
-        ax.set_ylabel(ylabel)
-        ax.set_ylim(0, 100)
-        st.pyplot(fig)
+            ax.set_title(title)
+            ax.set_xlabel(xlabel)
+            ax.set_ylabel(ylabel)
+            ax.set_ylim(0, 100)
+            st.pyplot(fig)
 
     # Plot each proportion
     st.header("Bar Plots")
