@@ -319,18 +319,20 @@ if selected == "Data exploration and cleaning":
         st.dataframe(df_rqi.head())
 
 
-        #data distribution before and after imputation
-        st.title("Histogram of a Column")
-        # Select a column to plot
-        column_to_plot = ['BMI', 'AGE', 'TOTCHOL', 'SYSBP', 'DIABP', 'HEARTRTE', 'GLUCOSE']
-        # Plot histogram
+        #histogram data
+        st.title("Histogram Plotter")
+        # Select column for the histogram
+        column_to_plot = st.selectbox("Select a column to plot:", df.columns)
+        # Create the histogram
+        bins = st.slider("Number of bins", min_value=10, max_value=50, value=30)
         fig, ax = plt.subplots()
-        sns.histplot(df_rqi[column_to_plot], bins=30, kde=True, ax=ax, color='blue')
+        sns.histplot(df_rqi[column_to_plot], bins=bins, kde=True, ax=ax, color='blue')
         ax.set_title(f"Histogram of {column_to_plot}")
         ax.set_xlabel(column_to_plot)
         ax.set_ylabel("Frequency")
         # Display the plot
         st.pyplot(fig)
+
 
 
 if selected == "Describe and Visualize the data":
@@ -344,6 +346,38 @@ if selected == "Describe and Visualize the data":
     #selection of relevant rows and columns for research question, put into new dataset
     df_rq=df[['BMI', 'AGE', 'SEX', 'TOTCHOL', 'SYSBP', 'DIABP', 'CURSMOKE','DIABETES', 'BPMEDS', 'HEARTRTE', 'GLUCOSE','ANYCHD','PERIOD']]
     
+    #title
+    st.title("Describe and visualize the data")
+    st.header("Proportion of each category")
+        # Calculate proportions
+    SEX_proportions = df_rqi['SEX'].value_counts(normalize=True) * 100
+    CURSMOKE_proportions = df_rqi['CURSMOKE'].value_counts(normalize=True) * 100
+    DIABETES_proportions = df_rqi['DIABETES'].value_counts(normalize=True) * 100
+    BPMEDS_proportions = df_rqi['BPMEDS'].value_counts(normalize=True) * 100
+    ANYCHD_proportions = df_rqi['ANYCHD'].value_counts(normalize=True) * 100
+    PERIOD_proportions = df_rqi['PERIOD'].value_counts(normalize=True) * 100
+
+    # Helper function to plot bar charts
+    def plot_proportions(proportions, title, xlabel, ylabel):
+        fig, ax = plt.subplots(figsize=(6, 4))
+        proportions.plot(kind='bar', color=['lightskyblue', 'coral'], ax=ax)
+        for i, v in enumerate(proportions):
+            ax.text(i, v + 1, f'{v:.1f}%', ha='center', va='bottom', fontsize=10)
+        ax.set_title(title)
+        ax.set_xlabel(xlabel)
+        ax.set_ylabel(ylabel)
+        ax.set_ylim(0, 100)
+        st.pyplot(fig)
+
+    # Plot each proportion
+    st.header("Bar Plots")
+    plot_proportions(SEX_proportions, "Sex Proportions", "Sex (1=male, 2=female)", "Percentage")
+    plot_proportions(CURSMOKE_proportions, "Current Smoking Proportions", "Current Smoking (0=no, 1=yes)", "Percentage")
+    plot_proportions(DIABETES_proportions, "Diabetes Proportions", "Diabetes (0=no, 1=yes)", "Percentage")
+    plot_proportions(BPMEDS_proportions, "Blood Pressure Medication Proportions", "BPMEDS (0=no, 1=yes, -1=unknown)", "Percentage")
+    plot_proportions(ANYCHD_proportions, "Any Coronary Heart Disease Proportions", "Any CHD (0=no, 1=yes)", "Percentage")
+    plot_proportions(PERIOD_proportions, "Period Proportions", "Period", "Percentage")
+
 
     # Streamlit Title
     st.header("BMI Calculator")
