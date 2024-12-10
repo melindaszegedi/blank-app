@@ -321,19 +321,31 @@ if selected == "Data exploration and cleaning":
         
         #histogram data
         st.title("Histogram Plotter")
+                # Define color map for variables
+        color_map = {
+            'BMI': 'lightblue',
+            'AGE': 'lightgreen',
+            'TOTCHOL': 'salmon',
+            'SYSBP': 'gold',
+            'DIABP': 'orchid',
+            'HEARTRTE': 'lightcoral',
+            'GLUCOSE': 'lightpink'
+        }
         # Select column for the histogram
         numerical_columnsi = ['BMI', 'AGE', 'TOTCHOL', 'SYSBP', 'DIABP', 'HEARTRTE', 'GLUCOSE']
         df_rqi_numeric = df_rqi[numerical_columns]
         column_to_plot = st.selectbox("Select a column to plot:", numerical_columnsi)
         # Create the histogram
         bins = st.slider("Number of bins", min_value=10, max_value=50, value=30)
+        color=color_map.get(column_to_plot, 'blue')
         fig, ax = plt.subplots()
-        sns.histplot(df_rqi[column_to_plot], bins=bins, kde=True, ax=ax, color='blue')
+        sns.histplot(df_rqi[column_to_plot], bins=bins, kde=True, ax=ax, color=color)
         ax.set_title(f"Histogram of {column_to_plot}")
         ax.set_xlabel(column_to_plot)
         ax.set_ylabel("Frequency")
         # Display the plot
         st.pyplot(fig)
+
 
 
 if selected == "Describe and Visualize the data":
