@@ -286,8 +286,9 @@ if selected == "Data exploration and cleaning":
                 st.write(f"###### {col}: {num_outliers_col} outliers")
 
             st.write(f"###### Total Number of Outliers: {total_outliers}")
-                #imputation of outliers:
-        # determing outliers by IRQ:
+
+        #imputation of outliers:
+        #determing outliers by IRQ:
         def detect_outliers(df_rq, column):
             Q1 = df_rq[column].quantile(0.2)
             Q3 = df_rq[column].quantile(0.8)
@@ -297,7 +298,7 @@ if selected == "Data exploration and cleaning":
             return (df_rq[column] < lower_bound) | (df_rq[column] > upper_bound)
 
         st.title("Outlier Detection and KNN Imputation")
-        st.dataframe(df_rq.head())
+        st.dataframe(df_rq.describe())
         #Columns with outliers
         selected_columns = ['BMI', 'AGE', 'TOTCHOL', 'SYSBP', 'DIABP', 'HEARTRTE', 'GLUCOSE']
         
@@ -307,7 +308,7 @@ if selected == "Data exploration and cleaning":
             df_imputed[col] = df_rq[col].where(~detect_outliers(df, col), np.nan)
 
         st.write("### DataFrame with Outliers Replaced by NaN")            
-        st.dataframe(df_imputed.head())
+        st.dataframe(df_imputed.describe())
 
         # Apply KNN Imputation to replace NaN values
         imputer = KNNImputer(n_neighbors=3)
@@ -315,13 +316,15 @@ if selected == "Data exploration and cleaning":
         df_rqi[selected_columns] = imputer.fit_transform(df_rqi[selected_columns])
 
         st.write("### DataFrame After KNN Imputation")
-        st.dataframe(df_rqi.head())
+        st.dataframe(df_rqi.describe())
 
-
+        
         #histogram data
         st.title("Histogram Plotter")
         # Select column for the histogram
-        column_to_plot = st.selectbox("Select a column to plot:", df.columns)
+        numerical_columnsi = ['BMI', 'AGE', 'TOTCHOL', 'SYSBP', 'DIABP', 'HEARTRTE', 'GLUCOSE']
+        df_rqi_numeric = df_rqi[numerical_columns]
+        column_to_plot = st.selectbox("Select a column to plot:", numerical_columnsi)
         # Create the histogram
         bins = st.slider("Number of bins", min_value=10, max_value=50, value=30)
         fig, ax = plt.subplots()
