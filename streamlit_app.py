@@ -322,24 +322,14 @@ if selected == "Data exploration and cleaning":
         #histogram data
         st.title("Histogram Plotter")
                 # Define color map for variables
-        color_map = {
-            'BMI': 'lightblue',
-            'AGE': 'lightgreen',
-            'TOTCHOL': 'salmon',
-            'SYSBP': 'gold',
-            'DIABP': 'orchid',
-            'HEARTRTE': 'lightcoral',
-            'GLUCOSE': 'lightpink'
-        }
         # Select column for the histogram
         numerical_columnsi = ['BMI', 'AGE', 'TOTCHOL', 'SYSBP', 'DIABP', 'HEARTRTE', 'GLUCOSE']
         df_rqi_numeric = df_rqi[numerical_columns]
         column_to_plot = st.selectbox("Select a column to plot:", numerical_columnsi)
         # Create the histogram
         bins = st.slider("Number of bins", min_value=10, max_value=50, value=30)
-        color=color_map.get(column_to_plot)
         fig, ax = plt.subplots()
-        sns.histplot(df_rqi[column_to_plot], bins=bins, kde=True, ax=ax, color=color)
+        sns.histplot(df_rqi[column_to_plot], bins=bins, kde=True, ax=ax, color='blue')
         ax.set_title(f"Histogram of {column_to_plot}")
         ax.set_xlabel(column_to_plot)
         ax.set_ylabel("Frequency")
@@ -358,6 +348,16 @@ if selected == "Describe and Visualize the data":
     df = pd.read_csv(url)
     #selection of relevant rows and columns for research question, put into new dataset
     df_rq=df[['BMI', 'AGE', 'SEX', 'TOTCHOL', 'SYSBP', 'DIABP', 'CURSMOKE','DIABETES', 'BPMEDS', 'HEARTRTE', 'GLUCOSE','ANYCHD','PERIOD']]
+    # Imputation missing values:
+    df_rq = df_rq.copy()
+    imputer = KNNImputer(n_neighbors=5)
+    df_rq['GLUCOSE'] = imputer.fit_transform(df_rq[['GLUCOSE']])
+    median_imputer = SimpleImputer(strategy='median')
+    df_rq['TOTCHOL'] = median_imputer.fit_transform(df_rq[['TOTCHOL']])
+    df_rq['BMI'] = median_imputer.fit_transform(df_rq[['BMI']])
+    df_rq['BPMEDS'] = df_rq['BPMEDS'].fillna(-1)  # -1 as "Unknown"
+    df_rq['HEARTRTE'] = median_imputer.fit_transform(df_rq[['HEARTRTE']])   
+    #imputation outliers:
     def detect_outliers(df_rq, column):
         Q1 = df_rq[column].quantile(0.2)
         Q3 = df_rq[column].quantile(0.8)
@@ -374,8 +374,6 @@ if selected == "Describe and Visualize the data":
     df_rqi[selected_columns] = imputer.fit_transform(df_rqi[selected_columns])
 
 
-    #title
-    st.title("Describe and visualize the data")
     st.header("Proportion of each category")
     # Calculate proportions
     SEX_proportions = df_rqi['SEX'].value_counts(normalize=True) * 100
@@ -383,22 +381,22 @@ if selected == "Describe and Visualize the data":
     DIABETES_proportions = df_rqi['DIABETES'].value_counts(normalize=True) * 100
     BPMEDS_proportions = df_rqi['BPMEDS'].value_counts(normalize=True) * 100
     ANYCHD_proportions = df_rqi['ANYCHD'].value_counts(normalize=True) * 100
-    PERIOD_proportions = df_rqi['PERIOD'].value_counts(normalize=True) * 100
-
-    # Helper function to plot bar charts
+    PERIOD_proportions = df_rqi['PERIOD'].value_counts(normalize=True) * 100 
+    
+    # plot bar charts
     def plot_proportions(proportions, title, xlabel, ylabel):
         fig, ax = plt.subplots(figsize=(6, 4))
         proportions.plot(kind='bar', color=['lightskyblue', 'coral'], ax=ax)
         for i, v in enumerate(proportions):
             ax.text(i, v + 1, f'{v:.1f}%', ha='center', va='bottom', fontsize=10)
-            ax.set_title(title)
-            ax.set_xlabel(xlabel)
-            ax.set_ylabel(ylabel)
-            ax.set_ylim(0, 100)
-            st.pyplot(fig)
+        ax.set_title(title)
+        ax.set_xlabel(xlabel)
+        ax.set_ylabel(ylabel)
+        ax.set_ylim(0, 100)
+        st.pyplot(fig)
+    st.markdown("These graphs show the proportion of each category variables with perpcentages.")
 
-    # Plot each proportion
-    st.header("Bar Plots")
+    # Plot each proportion/percentage
     plot_proportions(SEX_proportions, "Sex Proportions", "Sex (1=male, 2=female)", "Percentage")
     plot_proportions(CURSMOKE_proportions, "Current Smoking Proportions", "Current Smoking (0=no, 1=yes)", "Percentage")
     plot_proportions(DIABETES_proportions, "Diabetes Proportions", "Diabetes (0=no, 1=yes)", "Percentage")
@@ -406,6 +404,9 @@ if selected == "Describe and Visualize the data":
     plot_proportions(ANYCHD_proportions, "Any Coronary Heart Disease Proportions", "Any CHD (0=no, 1=yes)", "Percentage")
     plot_proportions(PERIOD_proportions, "Period Proportions", "Period", "Percentage")
 
+
+
+  
 
     # Streamlit Title
     st.header("BMI Calculator")
@@ -443,6 +444,7 @@ if selected == "Describe and Visualize the data":
 
 
 if selected == "Data Analysis":
+    st.title("Describe and Visualize the data")
     # Corrected URL for the raw CSV file
     url = 'https://raw.githubusercontent.com/LUCE-Blockchain/Databases-for-teaching/main/Framingham%20Dataset.csv'
     #allow all the columns to be visible
@@ -451,14 +453,38 @@ if selected == "Data Analysis":
     df = pd.read_csv(url)
     #selection of relevant rows and columns for research question, put into new dataset
     df_rq=df[['BMI', 'AGE', 'SEX', 'TOTCHOL', 'SYSBP', 'DIABP', 'CURSMOKE','DIABETES', 'BPMEDS', 'HEARTRTE', 'GLUCOSE','ANYCHD','PERIOD']]
-    st.write("### Summary Statistics of relevant rows")
-    st.dataframe(df_rq.describe())
+    # Imputation missing values:
+    df_rq = df_rq.copy()
+    imputer = KNNImputer(n_neighbors=5)
+    df_rq['GLUCOSE'] = imputer.fit_transform(df_rq[['GLUCOSE']])
+    median_imputer = SimpleImputer(strategy='median')
+    df_rq['TOTCHOL'] = median_imputer.fit_transform(df_rq[['TOTCHOL']])
+    df_rq['BMI'] = median_imputer.fit_transform(df_rq[['BMI']])
+    df_rq['BPMEDS'] = df_rq['BPMEDS'].fillna(-1)  # -1 as "Unknown"
+    df_rq['HEARTRTE'] = median_imputer.fit_transform(df_rq[['HEARTRTE']])   
+    #imputation outliers:
+    def detect_outliers(df_rq, column):
+        Q1 = df_rq[column].quantile(0.2)
+        Q3 = df_rq[column].quantile(0.8)
+        IQR = Q3 - Q1
+        lower_bound = Q1 - 1.5 * IQR
+        upper_bound = Q3 + 1.5 * IQR
+        return (df_rq[column] < lower_bound) | (df_rq[column] > upper_bound)
+    selected_columns = ['BMI', 'AGE', 'TOTCHOL', 'SYSBP', 'DIABP', 'HEARTRTE', 'GLUCOSE']
+    df_imputed = df_rq.copy()
+    for col in selected_columns:
+        df_imputed[col] = df_rq[col].where(~detect_outliers(df, col), np.nan)
+    imputer = KNNImputer(n_neighbors=3)
+    df_rqi = df_imputed.copy()
+    df_rqi[selected_columns] = imputer.fit_transform(df_rqi[selected_columns])
+
 
 
 
 
 
 if selected == "Conclusion":
+    st.title("Describe and Visualize the data")
     # Corrected URL for the raw CSV file
     url = 'https://raw.githubusercontent.com/LUCE-Blockchain/Databases-for-teaching/main/Framingham%20Dataset.csv'
     #allow all the columns to be visible
@@ -467,6 +493,31 @@ if selected == "Conclusion":
     df = pd.read_csv(url)
     #selection of relevant rows and columns for research question, put into new dataset
     df_rq=df[['BMI', 'AGE', 'SEX', 'TOTCHOL', 'SYSBP', 'DIABP', 'CURSMOKE','DIABETES', 'BPMEDS', 'HEARTRTE', 'GLUCOSE','ANYCHD','PERIOD']]
+    # Imputation missing values:
+    df_rq = df_rq.copy()
+    imputer = KNNImputer(n_neighbors=5)
+    df_rq['GLUCOSE'] = imputer.fit_transform(df_rq[['GLUCOSE']])
+    median_imputer = SimpleImputer(strategy='median')
+    df_rq['TOTCHOL'] = median_imputer.fit_transform(df_rq[['TOTCHOL']])
+    df_rq['BMI'] = median_imputer.fit_transform(df_rq[['BMI']])
+    df_rq['BPMEDS'] = df_rq['BPMEDS'].fillna(-1)  # -1 as "Unknown"
+    df_rq['HEARTRTE'] = median_imputer.fit_transform(df_rq[['HEARTRTE']])   
+    #imputation outliers:
+    def detect_outliers(df_rq, column):
+        Q1 = df_rq[column].quantile(0.2)
+        Q3 = df_rq[column].quantile(0.8)
+        IQR = Q3 - Q1
+        lower_bound = Q1 - 1.5 * IQR
+        upper_bound = Q3 + 1.5 * IQR
+        return (df_rq[column] < lower_bound) | (df_rq[column] > upper_bound)
+    selected_columns = ['BMI', 'AGE', 'TOTCHOL', 'SYSBP', 'DIABP', 'HEARTRTE', 'GLUCOSE']
+    df_imputed = df_rq.copy()
+    for col in selected_columns:
+        df_imputed[col] = df_rq[col].where(~detect_outliers(df, col), np.nan)
+    imputer = KNNImputer(n_neighbors=3)
+    df_rqi = df_imputed.copy()
+    df_rqi[selected_columns] = imputer.fit_transform(df_rqi[selected_columns])
+
     
 
 
