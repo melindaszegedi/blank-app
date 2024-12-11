@@ -373,6 +373,16 @@ if selected == "Describe and Visualize the data":
     df_rqi = df_imputed.copy()
     df_rqi[selected_columns] = imputer.fit_transform(df_rqi[selected_columns])
 
+    #table with descriptive statistics 
+    df_describe = df_rqi.describe()
+    # Function to style entire rows based on condition
+    def style_rows(row):
+        return ["background-color: #f7aea8;" if row.name in ['count', 'std', '25%', '75%'] else "background-color: #ffd4d1;" for _ in row]
+    # Apply style to specific rows by their index
+    styled_df = df_describe.style.apply(style_rows, axis=1)
+    st.title("Descriptive Statistics with Background Colors")
+    st.dataframe(styled_df)
+
 
     st.header("Proportion of each category")
     # Calculate proportions
@@ -397,16 +407,66 @@ if selected == "Describe and Visualize the data":
     st.markdown("These graphs show the proportion of each category variables with perpcentages.")
 
     # Plot each proportion/percentage
-    plot_proportions(SEX_proportions, "Sex Proportions", "Sex (1=male, 2=female)", "Percentage")
-    plot_proportions(CURSMOKE_proportions, "Current Smoking Proportions", "Current Smoking (0=no, 1=yes)", "Percentage")
-    plot_proportions(DIABETES_proportions, "Diabetes Proportions", "Diabetes (0=no, 1=yes)", "Percentage")
-    plot_proportions(BPMEDS_proportions, "Blood Pressure Medication Proportions", "BPMEDS (0=no, 1=yes, -1=unknown)", "Percentage")
-    plot_proportions(ANYCHD_proportions, "Any Coronary Heart Disease Proportions", "Any CHD (0=no, 1=yes)", "Percentage")
-    plot_proportions(PERIOD_proportions, "Period Proportions", "Period", "Percentage")
+    col1,col2,col3= st.columns(3)
+    with col1:
+        plot_proportions(SEX_proportions, "Sex Proportions", "Sex (1=male, 2=female)", "Percentage")
+        plot_proportions(CURSMOKE_proportions, "Current Smoking Proportions", "Current Smoking (0=no, 1=yes)", "Percentage")
+    with col2:
+        plot_proportions(DIABETES_proportions, "Diabetes Proportions", "Diabetes (0=no, 1=yes)", "Percentage")
+        plot_proportions(BPMEDS_proportions, "Blood Pressure Medication Proportions", "BPMEDS (0=no, 1=yes, -1=unknown)", "Percentage")
+    with col3:
+        plot_proportions(ANYCHD_proportions, "Any Coronary Heart Disease Proportions", "Any CHD (0=no, 1=yes)", "Percentage")
+        plot_proportions(PERIOD_proportions, "Period Proportions", "Period", "Percentage")
 
+    # Calculate the correlation matrix
+    correlation_matrix = df_rqi.corr()
+    # Create the heatmap
+    st.write("### Correlation Heatmap")
+    fig, ax = plt.subplots(figsize=(18, 12))
+    sns.heatmap(
+        correlation_matrix,
+        annot=False,
+        cmap="RdBu_r",
+        linewidths=1,
+        center=0,
+        cbar_kws={"shrink": 0.8, "label": "Correlation Coefficient"},
+        ax=ax,
+    )
 
+    # Annotate significant correlations
+    for row in range(correlation_matrix.shape[0]):
+        for col in range(correlation_matrix.shape[1]):
+            correlation_value = correlation_matrix.iloc[row, col]
+            if abs(correlation_value) >= 0.5 and row != col:
+                ax.text(
+                    col + 0.5,
+                    row + 0.5,
+                    f"{correlation_value:.2f}",
+                    ha="center",
+                    va="center",
+                    color="black",
+                    fontsize=12,
+                    weight="bold",
+                )
 
-  
+    ax.set_title("Correlation Heatmap", fontsize=20, weight="bold")
+    ax.set_xticklabels(ax.get_xticklabels(), fontsize=12, rotation=45, ha="right")
+    ax.set_yticklabels(ax.get_yticklabels(), fontsize=12, rotation=0)
+    st.pyplot(fig)
+
+    # Visualize change in data over examination periods
+    fig, ax = plt.subplots(figsize=(10, 6))
+    df_rqi.groupby('PERIOD')[['AGE', 'TOTCHOL', 'SYSBP', 'DIABP', 'HEARTRTE', 'GLUCOSE', 'BMI']].mean().plot(
+    marker='o', ax=ax
+    )
+    ax.set_title(
+        'Average Values Over Examination Periods'
+    )
+    ax.set_xlabel('Examination Period')
+    ax.set_ylabel('Average Value')
+    ax.grid(True)
+    st.title("Visualization in Streamlit")
+    st.pyplot(fig)
 
     # Streamlit Title
     st.header("BMI Calculator")
