@@ -465,7 +465,6 @@ if selected == "Describe and Visualize the data":
     ax.set_xlabel('Examination Period')
     ax.set_ylabel('Average Value')
     ax.grid(True)
-    st.title("Visualization in Streamlit")
     st.pyplot(fig)
 
     # Streamlit Title
