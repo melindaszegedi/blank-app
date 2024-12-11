@@ -380,7 +380,7 @@ if selected == "Describe and Visualize the data":
         return ["background-color: #f7aea8;" if row.name in ['count', 'std', '25%', '75%'] else "background-color: #ffd4d1;" for _ in row]
     # Apply style to specific rows by their index
     styled_df = df_describe.style.apply(style_rows, axis=1)
-    st.title("Descriptive Statistics with Background Colors")
+    st.header("Descriptive Statistics of final data")
     st.dataframe(styled_df)
 
 
