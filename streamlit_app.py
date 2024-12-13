@@ -28,10 +28,15 @@ if selected == "Introduction":
     pd.set_option('display.max_columns', None)
     # Read the CSV file from the URL
     df = pd.read_csv(url)
-
-
-
-
+    st.write("For this project we used a subset of the data collected from the Framingham Heart Study.")
+    st.write("This study was the first prospective study of cardiovascular disease and identified the concept of risk factors and their joint effects. The population consisted of free-living subjects in the community of Framingham, Massachusetts ")
+    st.write("The subset that we use contained information from the first round of physical examinations, as the original study contains information from 3 generations: first, second and third generation of participants")
+    st.write("Clinic data was collected from the participants during 3 examination periods, approximately 6 years apart (between 1956 - 1968). Each partiicpant was followed for a total of 24 years.")
+    st.write("The Framingham Heart Study has produced approximately 6,000 articles in leading medical journals.")
+    st.write("The dataset was provided for teaching purpose and was provided with permission from the National Heart, Lung and Blood Institute (NHLBI) (No. N01-HC-25195)")
+    st.image("https://avatars.githubusercontent.com/u/4061889?s=280&v=4", width=100)
+    st.write("reference: Hong Y. Framingham Heart Study (FHS) | National Heart, Lung, and Blood Institute (NHLBI) [Internet]. Nih.gov. 2018. Available from: https://www.nhlbi.nih.gov/science/framingham-heart-study-fhs")
+   
 
 if selected == "Data preparation":
     st.title("Data preparation")
@@ -198,6 +203,18 @@ if selected == "Data exploration and cleaning":
             ax1.set_xlabel('GLUCOSE')
             ax1.set_ylabel('Frequency')
             st.pyplot(fig1)
+        
+        #Identify missing values in dataset
+        missing_values = df_rq.isnull().sum().sum()
+        # Display warning message if there are missing values
+        if missing_values > 0:
+            st.markdown(
+            f"<span style='color:red; font-weight:bold;'>Warning: The dataset has {missing_values} missing values.</span>", 
+            unsafe_allow_html=True
+        )
+        else:
+            st.success("The dataset has no missing values.")        
+
 
     with st.expander("##### Identify, report, correct issues with erroneous data (if any)"):
         st.header("Identify, report, correct issues with erroneous data (if any)")
